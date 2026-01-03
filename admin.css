@@ -1,223 +1,254 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-:root {
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --bg-main: #f1f5f9;
-    --sidebar-bg: #0f172a;
-    --white: #ffffff;
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --success: #10b981;
-    --danger: #f43f5e;
-    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --border: #e2e8f0;
-}
-
-* { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-
-body { margin: 0; background: var(--bg-main); color: var(--text-main); overflow-x: hidden; }
-
-.dashboard-wrapper { display: flex; min-height: 100vh; }
-
-/* Sidebar */
-.sidebar {
-    width: 280px;
-    background: var(--sidebar-bg);
-    color: white;
-    padding: 2.5rem 1.5rem;
-    position: fixed;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    z-index: 100;
-    transition: transform 0.3s ease;
-}
-
-.sidebar h2 {
-    font-size: 1.4rem;
-    margin-bottom: 3rem;
-    background: linear-gradient(to right, #818cf8, #c084fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 800;
-}
-
-.nav-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #64748b;
-    margin-bottom: 0.8rem;
-    display: block;
-}
-
-#datePicker {
-    width: 100%;
-    padding: 12px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    color: white;
-    margin-bottom: 2rem;
-    outline: none;
-}
-
-/* Main Content */
-.main-content { 
-    flex: 1; 
-    margin-left: 280px; 
-    padding: 3rem; 
-    transition: all 0.3s ease;
-}
-
-.header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 3rem; 
-    flex-wrap: wrap; 
-    gap: 1.5rem;
-}
-
-.search-box {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 10px 18px;
-    width: 320px;
-    display: flex;
-    align-items: center;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-}
-
-.search-box input { border: none; outline: none; width: 100%; font-size: 0.9rem; background: transparent; }
-
-/* Grid Cards */
-.admin-grid { 
-    display: grid; 
-    grid-template-columns: 1.2fr 1fr; 
-    gap: 2rem; 
-    margin-bottom: 2.5rem; 
-}
-
-.stat-card {
-    background: var(--white);
-    padding: 1.8rem;
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-}
-
-.summary-list { list-style: none; padding: 0; margin: 0; }
-.summary-list li {
-    display: flex;
-    justify-content: space-between;
-    padding: 1.1rem 0;
-    border-bottom: 1px solid #f1f5f9;
-}
-.summary-list li:last-child { border-bottom: none; }
-
-/* Table Section with Responsive Scroll */
-.table-card {
-    background: var(--white);
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    overflow: hidden;
-}
-
-.table-responsive {
-    width: 100%;
-    overflow-x: auto;
-}
-
-table { width: 100%; border-collapse: collapse; min-width: 700px; }
-th { background: #f8fafc; padding: 1.2rem 1.5rem; text-align: left; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
-td { padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
-
-/* Buttons & Badges */
-.btn {
-    padding: 12px 18px;
-    border-radius: 10px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s ease;
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-.btn-success { background: var(--primary); color: white; }
-.btn-success:hover { background: var(--primary-hover); transform: translateY(-2px); }
-
-.btn-danger { 
-    background: rgba(244, 63, 94, 0.1); 
-    color: var(--danger); 
-    margin-top: auto; 
-}
-.btn-danger:hover { background: var(--danger); color: white; }
-
-/* Status Badges */
-.badge { padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
-.bg-p { background: #dcfce7; color: #15803d; }
-.bg-l { background: #fee2e2; color: #b91c1c; }
-
-/* --- FIXED SMALL EDIT BUTTON --- */
-.btn-edit {
-    background: transparent;
-    color: var(--primary);
-    border: 1px solid var(--primary);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    width: fit-content;      /* Ensures button doesn't stretch */
-    white-space: nowrap;    /* Prevents text wrapping */
-}
-
-.btn-edit:hover { 
-    background: var(--primary); 
-    color: white; 
-}
-
-/* --- RESPONSIVE MEDIA QUERIES --- */
-
-@media (max-width: 1024px) {
-    .sidebar { width: 240px; }
-    .main-content { margin-left: 240px; padding: 2rem; }
-    .admin-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .dashboard-wrapper { flex-direction: column; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Nexus</title>
+    <link rel="stylesheet" href="admin.css">
     
-    .sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        padding: 1.5rem;
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <h2>Cyient Admin</h2>
+        
+        <span class="nav-label">Date Filter</span>
+        <input type="date" id="datePicker">
+
+        <span class="nav-label">Management</span>
+        <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+        <button class="btn btn-primary" id="addManualBtn" style="margin-top: 10px; width: 100%;">➕ Mark Attendance</button>
+        
+        <button class="btn btn-danger" id="logoutBtn" style="margin-top: 20px;">Log out</button>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div>
+                <h1 id="pageTitle">Attendance Overview</h1>
+                <p style="color: var(--text-muted); margin: 5px 0;">
+                    Showing <strong>Present</strong> staff for: <span id="currentDateDisplay" style="color: var(--primary); font-weight: 700;"></span>
+                </p>
+            </div>
+            <div class="search-box">
+                <input type="text" id="staffSearch" placeholder="Filter current list...">
+            </div>
+        </header>
+
+        <section class="admin-grid">
+            <div class="stat-card">
+                <h3 style="margin: 0 0 1.5rem 0; font-size: 1rem; color: var(--text-muted);">Attendance Ratio</h3>
+                <div style="height: 220px;">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3 style="margin: 0 0 1.5rem 0; font-size: 1rem; color: var(--text-muted);">Daily Summary</h3>
+                <ul class="summary-list">
+                    <li><span>Active Records</span> <strong id="sumPresent" style="color: var(--success);">0</strong></li>
+                    <li><span>Total Staff</span> <strong id="sumTotal">0</strong></li>
+                </ul>
+                <p style="font-size: 0.8rem; color: gray; margin-top: 10px;">* Only marked employees appear in the list below.</p>
+            </div>
+        </section>
+
+        <section class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminBody"></tbody>
+            </table>
+            <div id="noDataMessage" style="text-align: center; padding: 40px; display: none;">
+                <p style="color: #94a3b8;">No attendance records found for this date.</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_ZrkX3tODa4nDyl9DhAX0llp43i-vAHA",
+        authDomain: "attendance-management-sy-5d69a.firebaseapp.com",
+        projectId: "attendance-management-sy-5d69a",
+        storageBucket: "attendance-management-sy-5d69a.firebasestorage.app",
+        messagingSenderId: "654602757590",
+        appId: "1:654602757590:web:aeb342f787081930d3b077"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let attendanceChart = null;
+    let markedEmployees = []; 
+    let allStaffNames = {}; // To map UIDs to Names easily
+    
+    const datePicker = document.getElementById('datePicker');
+    const searchInput = document.getElementById('staffSearch');
+
+    // Initialize Date
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    datePicker.value = today;
+    datePicker.max = today;
+
+    onAuthStateChanged(auth, async user => {
+        if(!user) window.location.href = "index.html";
+        else {
+            const d = await getDoc(doc(db, "users", user.uid));
+            if(d.exists() && d.data().role !== 'admin') window.location.href = "dashboard.html";
+            else {
+                await fetchAllStaff(); // Get master list of staff
+                loadReport(datePicker.value);
+            }
+        }
+    });
+
+    async function fetchAllStaff() {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(doc => {
+            if(doc.data().role === 'employee') {
+                allStaffNames[doc.id] = doc.data().fullName;
+            }
+        });
+        document.getElementById('sumTotal').innerText = Object.keys(allStaffNames).length;
     }
 
-    .sidebar h2 { margin-bottom: 1.5rem; }
-    #datePicker { margin-bottom: 1rem; }
+    async function loadReport(date) {
+        document.getElementById('currentDateDisplay').innerText = date;
+        const attSnap = await getDocs(query(collection(db, "attendance"), where("date", "==", date)));
+        
+        markedEmployees = [];
+        attSnap.forEach(doc => {
+            const data = doc.data();
+            markedEmployees.push({
+                uid: data.uid,
+                fullName: data.name || allStaffNames[data.uid] || "Unknown",
+                status: data.status
+            });
+        });
 
-    .main-content {
-        margin-left: 0;
-        padding: 1.5rem;
+        renderDisplay(markedEmployees);
     }
 
-    .header {
-        flex-direction: column;
-        align-items: stretch;
+    function renderDisplay(employees) {
+        const tbody = document.getElementById('adminBody');
+        const noData = document.getElementById('noDataMessage');
+        tbody.innerHTML = "";
+        
+        if (employees.length === 0) {
+            noData.style.display = "block";
+            updateChart(0, 1); // Show empty chart
+            document.getElementById('sumPresent').innerText = "0";
+            return;
+        }
+
+        noData.style.display = "none";
+        let presentCount = 0;
+
+        employees.forEach(emp => {
+            if(emp.status === "Present") presentCount++;
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight: 600;">${emp.fullName}</td>
+                    <td><span class="badge ${emp.status === 'Present' ? 'bg-p' : 'bg-l'}">${emp.status}</span></td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editAttendance('${emp.uid}', '${emp.fullName}', '${emp.status}')">✏️ Edit</button>
+                    </td>
+                </tr>`;
+        });
+
+        document.getElementById('sumPresent').innerText = presentCount;
+        updateChart(presentCount, employees.length - presentCount);
     }
 
-    .search-box { width: 100%; }
-}
+    // Manual add/mark functionality
+    document.getElementById('addManualBtn').onclick = async () => {
+        const options = {};
+        Object.keys(allStaffNames).forEach(id => { options[id] = allStaffNames[id]; });
 
-.swal2-popup { font-family: 'Plus Jakarta Sans', sans-serif !important; border-radius: 20px !important; }
+        const { value: staffId } = await Swal.fire({
+            title: 'Select Employee',
+            input: 'select',
+            inputOptions: options,
+            showCancelButton: true
+        });
+
+        if (staffId) {
+            editAttendance(staffId, allStaffNames[staffId], "Present");
+        }
+    };
+
+    window.editAttendance = async (uid, name, currentStatus) => {
+        const { value: newStatus } = await Swal.fire({
+            title: `Mark Attendance`,
+            text: `Setting status for ${name} on ${datePicker.value}`,
+            input: 'select',
+            inputOptions: { 'Present': 'Present', 'Absent': 'Absent' },
+            inputValue: currentStatus,
+            showCancelButton: true
+        });
+
+        if (newStatus) {
+            const docId = `${uid}_${datePicker.value}`;
+            await setDoc(doc(db, "attendance", docId), {
+                uid: uid, name: name, date: datePicker.value, status: newStatus, updatedAt: new Date().toISOString()
+            }, { merge: true });
+            loadReport(datePicker.value);
+        }
+    };
+
+    function updateChart(p, l) {
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        if(attendanceChart) attendanceChart.destroy();
+        attendanceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent'],
+                datasets: [{ data: [p, l], backgroundColor: ['#10b981', '#f43f5e'] }]
+            },
+            options: { maintainAspectRatio: false }
+        });
+    }
+
+    window.exportToExcel = () => {
+        const ws = XLSX.utils.json_to_sheet(markedEmployees);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        XLSX.writeFile(wb, `Attendance_${datePicker.value}.xlsx`);
+    };
+
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = markedEmployees.filter(emp => emp.fullName.toLowerCase().includes(term));
+        renderDisplay(filtered);
+    });
+
+    datePicker.addEventListener('change', (e) => loadReport(e.target.value));
+    document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
+</script>
+
+<style>
+    .btn-primary { background: #6366f1; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+    .btn-edit { background: #f3f4f6; color: #1f2937; border: 1px solid #d1d5db; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    .badge { padding: 4px 10px; border-radius: 20px; color: white; font-size: 0.75rem; font-weight: bold; }
+    .bg-p { background: #10b981; }
+    .bg-l { background: #f43f5e; }
+</style>
+</body>
+</html>
