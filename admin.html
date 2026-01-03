@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Nexus</title>
+    <link rel="stylesheet" href="admin.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <h2>Cyient Admin</h2>
+        
+        <span class="nav-label">Date Filter</span>
+        <input type="date" id="datePicker">
+
+        <span class="nav-label">Management</span>
+        <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+        
+        <button class="btn btn-danger" id="logoutBtn">Log out</button>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div>
+                <h1 id="pageTitle">Attendance Overview</h1>
+                <p style="color: var(--text-muted); margin: 5px 0;">
+                    Viewing data for: <span id="currentDateDisplay" style="color: var(--primary); font-weight: 700;"></span>
+                </p>
+            </div>
+            <div class="search-box">
+                <input type="text" id="staffSearch" placeholder="Search by employee name...">
+            </div>
+        </header>
+
+        <section class="admin-grid">
+            <div class="stat-card">
+                <h3 style="margin: 0 0 1.5rem 0; font-size: 1rem; color: var(--text-muted);">Attendance Ratio</h3>
+                <div style="height: 220px;">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3 style="margin: 0 0 1.5rem 0; font-size: 1rem; color: var(--text-muted);">Quick Summary</h3>
+                <ul class="summary-list">
+                    <li><span>Total Employees</span> <strong id="sumTotal">0</strong></li>
+                    <li><span>Present Today</span> <strong id="sumPresent" style="color: var(--success);">0</strong></li>
+                    <li><span>On Leave / Absent</span> <strong id="sumLeave" style="color: var(--danger);">0</strong></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminBody"></tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_ZrkX3tODa4nDyl9DhAX0llp43i-vAHA",
+        authDomain: "attendance-management-sy-5d69a.firebaseapp.com",
+        projectId: "attendance-management-sy-5d69a",
+        storageBucket: "attendance-management-sy-5d69a.firebasestorage.app",
+        messagingSenderId: "654602757590",
+        appId: "1:654602757590:web:aeb342f787081930d3b077"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let attendanceChart = null;
+    let allEmployeeData = []; 
+    const datePicker = document.getElementById('datePicker');
+    const searchInput = document.getElementById('staffSearch');
+    datePicker.value = new Date().toISOString().split('T')[0];
+
+    onAuthStateChanged(auth, async user => {
+        if(!user) window.location.href = "index.html";
+        else {
+            const d = await getDoc(doc(db, "users", user.uid));
+            if(d.exists() && d.data().role !== 'admin') window.location.href = "dashboard.html";
+            else loadReport(datePicker.value);
+        }
+    });
+
+    async function loadReport(date) {
+        document.getElementById('currentDateDisplay').innerText = date;
+        const usersSnap = await getDocs(collection(db, "users"));
+        const attSnap = await getDocs(query(collection(db, "attendance"), where("date", "==", date)));
+        
+        let statusMap = {};
+        attSnap.forEach(doc => { statusMap[doc.data().uid] = doc.data().status; });
+
+        allEmployeeData = [];
+        usersSnap.forEach(uDoc => {
+            const data = uDoc.data();
+            if(data.role === 'employee') {
+                allEmployeeData.push({
+                    uid: uDoc.id,
+                    fullName: data.fullName,
+                    status: statusMap[uDoc.id] || "Absent"
+                });
+            }
+        });
+        renderDisplay(allEmployeeData);
+    }
+
+    function renderDisplay(employees) {
+        const tbody = document.getElementById('adminBody');
+        tbody.innerHTML = "";
+        let presentCount = 0; let absentCount = 0;
+
+        employees.forEach(emp => {
+            const isPresent = emp.status === "Present";
+            if(isPresent) presentCount++; else absentCount++;
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight: 600;">${emp.fullName}</td>
+                    <td>
+                        <span class="badge ${isPresent ? 'bg-p' : 'bg-l'}">${emp.status}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editAttendance('${emp.uid}', '${emp.fullName}', '${emp.status}')">✏️ Edit</button>
+                    </td>
+                </tr>`;
+        });
+
+        document.getElementById('sumTotal').innerText = allEmployeeData.length;
+        document.getElementById('sumPresent').innerText = presentCount;
+        document.getElementById('sumLeave').innerText = absentCount;
+        updateChart(presentCount, absentCount);
+    }
+
+    // --- NEW EDIT FUNCTION ---
+    window.editAttendance = async (uid, name, currentStatus) => {
+        const { value: newStatus } = await Swal.fire({
+            title: `Update Attendance`,
+            text: `Change status for ${name} on ${datePicker.value}`,
+            input: 'select',
+            inputOptions: { 'Present': 'Present', 'Absent': 'Absent' },
+            inputValue: currentStatus,
+            showCancelButton: true,
+            confirmButtonColor: '#6366f1'
+        });
+
+        if (newStatus && newStatus !== currentStatus) {
+            try {
+                // Document ID is usually uid_date to keep it unique per day
+                const docId = `${uid}_${datePicker.value}`;
+                await setDoc(doc(db, "attendance", docId), {
+                    uid: uid,
+                    name: name,
+                    date: datePicker.value,
+                    status: newStatus,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+
+                Swal.fire("Updated!", "Status changed successfully.", "success");
+                loadReport(datePicker.value); // Refresh table
+            } catch (error) {
+                Swal.fire("Error", "Could not update status.", "error");
+            }
+        }
+    };
+
+    function updateChart(p, l) {
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        if(attendanceChart) attendanceChart.destroy();
+        attendanceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent'],
+                datasets: [{ data: [p, l], backgroundColor: ['#10b981', '#f43f5e'] }]
+            },
+            options: { maintainAspectRatio: false }
+        });
+    }
+
+    window.exportToExcel = () => {
+        if(allEmployeeData.length === 0) return Swal.fire("No Data", "Nothing to export.", "info");
+        const excelRows = allEmployeeData.map(emp => ({
+            "Employee Name": emp.fullName,
+            "Date": datePicker.value,
+            "Status": emp.status
+        }));
+        const ws = XLSX.utils.json_to_sheet(excelRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+        XLSX.writeFile(wb, `Attendance_${datePicker.value}.xlsx`);
+    };
+
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        renderDisplay(allEmployeeData.filter(emp => emp.fullName.toLowerCase().includes(term)));
+    });
+
+    datePicker.addEventListener('change', (e) => loadReport(e.target.value));
+
+    document.getElementById('logoutBtn').onclick = () => {
+        signOut(auth).then(() => window.location.href = "index.html");
+    };
+</script>
+
+<style>
+    /* Add this to your admin.css or here */
+    .btn-edit {
+        background: #6366f1;
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    .btn-edit:hover { background: #4f46e5; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; color: white; }
+    .bg-p { background: #10b981; } /* Present Green */
+    .bg-l { background: #f43f5e; } /* Absent Red */
+</style>
+</body>
+</html>
