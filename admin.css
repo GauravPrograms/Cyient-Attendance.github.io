@@ -129,7 +129,7 @@ body { margin: 0; background: var(--bg-main); color: var(--text-main); overflow-
 
 .table-responsive {
     width: 100%;
-    overflow-x: auto; /* Vital for small screens */
+    overflow-x: auto;
 }
 
 table { width: 100%; border-collapse: collapse; min-width: 700px; }
@@ -163,34 +163,37 @@ td { padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.95re
 .bg-p { background: #dcfce7; color: #15803d; }
 .bg-l { background: #fee2e2; color: #b91c1c; }
 
-/* EDIT BUTTON */
+/* --- FIXED SMALL EDIT BUTTON --- */
 .btn-edit {
     background: transparent;
     color: var(--primary);
-    border: 1.5px solid var(--primary);
-    padding: 6px 14px;
-    border-radius: 8px;
+    border: 1px solid var(--primary);
+    padding: 4px 10px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    width: fit-content;      /* Ensures button doesn't stretch */
+    white-space: nowrap;    /* Prevents text wrapping */
 }
 
-.btn-edit:hover { background: var(--primary); color: white; }
+.btn-edit:hover { 
+    background: var(--primary); 
+    color: white; 
+}
 
 /* --- RESPONSIVE MEDIA QUERIES --- */
 
-/* For Tablets and smaller laptops */
 @media (max-width: 1024px) {
     .sidebar { width: 240px; }
     .main-content { margin-left: 240px; padding: 2rem; }
-    .admin-grid { grid-template-columns: 1fr; } /* Stack cards into 1 column */
+    .admin-grid { grid-template-columns: 1fr; }
 }
 
-/* For Mobile Phones */
 @media (max-width: 768px) {
     .dashboard-wrapper { flex-direction: column; }
     
@@ -217,5 +220,4 @@ td { padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; font-size: 0.95re
     .search-box { width: 100%; }
 }
 
-/* Modal styling fix */
 .swal2-popup { font-family: 'Plus Jakarta Sans', sans-serif !important; border-radius: 20px !important; }
