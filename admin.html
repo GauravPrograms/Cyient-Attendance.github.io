@@ -21,8 +21,9 @@
 
         <span class="nav-label">Management</span>
         <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+        <button class="btn btn-edit" style="margin-top: 10px; width: 100%; background: var(--primary);" onclick="markNewEntry()">➕ Mark Attendance</button>
         
-        <button class="btn btn-danger" id="logoutBtn">Log out</button>
+        <button class="btn btn-danger" id="logoutBtn" style="margin-top: 20px;">Log out</button>
     </aside>
 
     <main class="main-content">
@@ -30,11 +31,11 @@
             <div>
                 <h1 id="pageTitle">Attendance Overview</h1>
                 <p style="color: var(--text-muted); margin: 5px 0;">
-                    Viewing data for: <span id="currentDateDisplay" style="color: var(--primary); font-weight: 700;"></span>
+                    Viewing records for: <span id="currentDateDisplay" style="color: var(--primary); font-weight: 700;"></span>
                 </p>
             </div>
             <div class="search-box">
-                <input type="text" id="staffSearch" placeholder="Search by employee name...">
+                <input type="text" id="staffSearch" placeholder="Search marked employees...">
             </div>
         </header>
 
@@ -53,6 +54,7 @@
                     <li><span>Present Today</span> <strong id="sumPresent" style="color: var(--success);">0</strong></li>
                     <li><span>On Leave / Absent</span> <strong id="sumLeave" style="color: var(--danger);">0</strong></li>
                 </ul>
+                <p style="font-size: 0.75rem; color: gray; margin-top: 10px;">* Only marked staff appear in the list below.</p>
             </div>
         </section>
 
@@ -67,6 +69,9 @@
                 </thead>
                 <tbody id="adminBody"></tbody>
             </table>
+            <div id="emptyState" style="text-align: center; padding: 20px; display: none; color: gray;">
+                No employees marked for this date yet.
+            </div>
         </section>
     </main>
 </div>
@@ -90,46 +95,73 @@
     const db = getFirestore(app);
 
     let attendanceChart = null;
-    let allEmployeeData = []; 
+    let markedData = []; 
+    let allStaffMaster = []; // Used for the "Total" count and the Manual Mark dropdown
+    
     const datePicker = document.getElementById('datePicker');
     const searchInput = document.getElementById('staffSearch');
-    datePicker.value = new Date().toISOString().split('T')[0];
+
+    // Set Date to Today
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    datePicker.value = today;
+    datePicker.max = today;
 
     onAuthStateChanged(auth, async user => {
         if(!user) window.location.href = "index.html";
         else {
             const d = await getDoc(doc(db, "users", user.uid));
             if(d.exists() && d.data().role !== 'admin') window.location.href = "dashboard.html";
-            else loadReport(datePicker.value);
+            else {
+                await fetchTotalStaff();
+                loadReport(datePicker.value);
+            }
         }
     });
 
-    async function loadReport(date) {
-        document.getElementById('currentDateDisplay').innerText = date;
-        const usersSnap = await getDocs(collection(db, "users"));
-        const attSnap = await getDocs(query(collection(db, "attendance"), where("date", "==", date)));
-        
-        let statusMap = {};
-        attSnap.forEach(doc => { statusMap[doc.data().uid] = doc.data().status; });
-
-        allEmployeeData = [];
-        usersSnap.forEach(uDoc => {
-            const data = uDoc.data();
-            if(data.role === 'employee') {
-                allEmployeeData.push({
-                    uid: uDoc.id,
-                    fullName: data.fullName,
-                    status: statusMap[uDoc.id] || "Absent"
-                });
+    // Get all employees to know the "Total" and for manual marking
+    async function fetchTotalStaff() {
+        const snap = await getDocs(collection(db, "users"));
+        allStaffMaster = [];
+        snap.forEach(uDoc => {
+            if(uDoc.data().role === 'employee') {
+                allStaffMaster.push({ uid: uDoc.id, fullName: uDoc.data().fullName });
             }
         });
-        renderDisplay(allEmployeeData);
+        document.getElementById('sumTotal').innerText = allStaffMaster.length;
+    }
+
+    async function loadReport(date) {
+        document.getElementById('currentDateDisplay').innerText = date;
+        const attSnap = await getDocs(query(collection(db, "attendance"), where("date", "==", date)));
+        
+        markedData = [];
+        attSnap.forEach(doc => {
+            const data = doc.data();
+            markedData.push({
+                uid: data.uid,
+                fullName: data.name,
+                status: data.status,
+                date: data.date
+            });
+        });
+
+        renderDisplay(markedData);
     }
 
     function renderDisplay(employees) {
         const tbody = document.getElementById('adminBody');
+        const emptyState = document.getElementById('emptyState');
         tbody.innerHTML = "";
-        let presentCount = 0; let absentCount = 0;
+        
+        if (employees.length === 0) {
+            emptyState.style.display = "block";
+        } else {
+            emptyState.style.display = "none";
+        }
+
+        let presentCount = 0; 
+        let absentCount = 0;
 
         employees.forEach(emp => {
             const isPresent = emp.status === "Present";
@@ -138,50 +170,56 @@
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight: 600;">${emp.fullName}</td>
-                    <td>
-                        <span class="badge ${isPresent ? 'bg-p' : 'bg-l'}">${emp.status}</span>
-                    </td>
+                    <td><span class="badge ${isPresent ? 'bg-p' : 'bg-l'}">${emp.status}</span></td>
                     <td>
                         <button class="btn btn-edit" onclick="editAttendance('${emp.uid}', '${emp.fullName}', '${emp.status}')">✏️ Edit</button>
                     </td>
                 </tr>`;
         });
 
-        document.getElementById('sumTotal').innerText = allEmployeeData.length;
         document.getElementById('sumPresent').innerText = presentCount;
         document.getElementById('sumLeave').innerText = absentCount;
         updateChart(presentCount, absentCount);
     }
 
-    // --- NEW EDIT FUNCTION ---
+    // Function to mark an employee who isn't on today's list yet
+    window.markNewEntry = async () => {
+        const staffOptions = {};
+        allStaffMaster.forEach(s => staffOptions[s.uid] = s.fullName);
+
+        const { value: selectedUid } = await Swal.fire({
+            title: 'Select Employee',
+            input: 'select',
+            inputOptions: staffOptions,
+            showCancelButton: true
+        });
+
+        if (selectedUid) {
+            const name = staffOptions[selectedUid];
+            editAttendance(selectedUid, name, "Present");
+        }
+    };
+
     window.editAttendance = async (uid, name, currentStatus) => {
         const { value: newStatus } = await Swal.fire({
             title: `Update Attendance`,
-            text: `Change status for ${name} on ${datePicker.value}`,
+            text: `Set status for ${name}`,
             input: 'select',
             inputOptions: { 'Present': 'Present', 'Absent': 'Absent' },
             inputValue: currentStatus,
-            showCancelButton: true,
-            confirmButtonColor: '#6366f1'
+            showCancelButton: true
         });
 
-        if (newStatus && newStatus !== currentStatus) {
-            try {
-                // Document ID is usually uid_date to keep it unique per day
-                const docId = `${uid}_${datePicker.value}`;
-                await setDoc(doc(db, "attendance", docId), {
-                    uid: uid,
-                    name: name,
-                    date: datePicker.value,
-                    status: newStatus,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-
-                Swal.fire("Updated!", "Status changed successfully.", "success");
-                loadReport(datePicker.value); // Refresh table
-            } catch (error) {
-                Swal.fire("Error", "Could not update status.", "error");
-            }
+        if (newStatus) {
+            const docId = `${uid}_${datePicker.value}`;
+            await setDoc(doc(db, "attendance", docId), {
+                uid: uid,
+                name: name,
+                date: datePicker.value,
+                status: newStatus,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+            loadReport(datePicker.value);
         }
     };
 
@@ -199,12 +237,15 @@
     }
 
     window.exportToExcel = () => {
-        if(allEmployeeData.length === 0) return Swal.fire("No Data", "Nothing to export.", "info");
-        const excelRows = allEmployeeData.map(emp => ({
+        if(markedData.length === 0) return Swal.fire("No Data", "Nothing to export.", "info");
+        
+        // Removed UID from export
+        const excelRows = markedData.map(emp => ({
             "Employee Name": emp.fullName,
-            "Date": datePicker.value,
+            "Date": emp.date,
             "Status": emp.status
         }));
+
         const ws = XLSX.utils.json_to_sheet(excelRows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Attendance");
@@ -213,7 +254,7 @@
 
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        renderDisplay(allEmployeeData.filter(emp => emp.fullName.toLowerCase().includes(term)));
+        renderDisplay(markedData.filter(emp => emp.fullName.toLowerCase().includes(term)));
     });
 
     datePicker.addEventListener('change', (e) => loadReport(e.target.value));
@@ -224,20 +265,10 @@
 </script>
 
 <style>
-    /* Add this to your admin.css or here */
-    .btn-edit {
-        background: #6366f1;
-        color: white;
-        padding: 5px 10px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.8rem;
-    }
-    .btn-edit:hover { background: #4f46e5; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; color: white; }
-    .bg-p { background: #10b981; } /* Present Green */
-    .bg-l { background: #f43f5e; } /* Absent Red */
+    .btn-edit { background: #6366f1; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; color: white; display: inline-block; min-width: 80px; text-align: center; }
+    .bg-p { background: #10b981; } 
+    .bg-l { background: #f43f5e; }
 </style>
 </body>
 </html>
